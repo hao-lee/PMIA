@@ -150,6 +150,14 @@ class Sgraph:
 		node.next = p
 		self.adjlist[dst_vertex_id].listpointer = node
 
+	def get_social_adj_vertex(self, vertex_id):
+		adjlist_node = self.adjlist[vertex_id].listpointer
+		adj_vertex_list = []
+		while adjlist_node:
+			adj_vertex_list.append(adjlist_node.dst_vertex_id)
+			adjlist_node = adjlist_node.next
+		return adj_vertex_list
+
 	def dump(self):
 		for vertex in self.adjlist:
 			print(str(vertex.vertex_id) + " :", end='')
@@ -209,17 +217,24 @@ if __name__ == '__main__':
 	# 遍历通信图，开始计算种子节点
 	max_path_len = 0
 	max_path = None
+	inf = dict() # start vertex id : number of influenced vertex
 	for v in pgraph.adjlist:
 		s = v.vertex_id
 		p = sgraph.adjlist[s].listpointer
 		while p:
 			d = p.dst_vertex_id
 			path = pgraph.shortest_path(s, d)
-			current_path_len = len(path) - 1
-			if current_path_len > hop_limit:
-				current_path_len = hop_limit
-			if current_path_len > max_path_len:
-				max_path_len = current_path_len
-				max_path = path
+			nums = 0 # influence
+			for path_vertex_id in path:
+				adj_vertex_list = sgraph.get_social_adj_vertex(path_vertex_id)
+				nums += len(set(adj_vertex_list))
+			inf[s] = nums
 			p = p.next
-	print("影响力最大的路径：%s，路径长度：%d" %(str(max_path), max_path_len))
+
+	max_influence = 0
+	seed_vertex = None
+	for vertex_id, influence in inf.items():
+		if influence > max_influence:
+			max_influence = influence
+			seed_vertex = vertex_id
+	print("种子节点：%d，影响力：%d" %(seed_vertex, max_influence))
