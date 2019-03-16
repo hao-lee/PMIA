@@ -211,22 +211,36 @@ class Pgraph:
 				in_vlist.append(each.get_id())
 		return in_vlist
 
+	def get_output_vertex(self, v):
+		out_vlist = []
+		for each in self.__adjlist:
+			if self.is_connected(v, each.get_id()):
+				out_vlist.append(each.get_id())
+		return out_vlist
+
 	def mip(self, u, v):
 		pai = 1 # 求积运算
 		path = self.shortest_path(u, v) # 计算 u, v 之间的最短路径
 		for i in range(len(path)-1): # 对路径上的权重求积
 			pai = pai * self.weight_on_edge(path[i], path[i+1])
-		return pai, path
+		return pai
 
 	def miia(self, v, theta):
 		union = set()
-		for in_v in self.get_input_vertex(v):
-			tmp_mip, tmp_path = self.mip(in_v, v)
+		for u in self.get_input_vertex(v):
+			tmp_mip = self.mip(u, v)
 			if tmp_mip < theta:
 				continue
-			# 将 tmp_path 中的点都加入并集
-			for x in tmp_path:
-				union.add(x)
+			union.add(u)
+		return union
+
+	def mioa(self, v, theta):
+		union = set()
+		for u in self.get_output_vertex(v):
+			tmp_mip = self.mip(v, u)
+			if tmp_mip < theta:
+				continue
+			union.add(u)
 		return union
 
 	def vertex_id_to_name(self, id):
@@ -258,5 +272,11 @@ if __name__ == '__main__':
 	# 测试 MIIA 运算
 	miia_union = pgraph.miia(3, 0.07)
 	print("MIIA set: ", end='')
-	for v_id in miia_union:
-		print(pgraph.vertex_id_to_name(v_id) + ' ', end='')
+	for u in miia_union:
+		print(pgraph.vertex_id_to_name(u) + ' ', end='')
+	print()
+	# 测试 MIOA 运算
+	mioa_union = pgraph.mioa(1, 0.07)
+	print("MIOA set: ", end='')
+	for u in mioa_union:
+		print(pgraph.vertex_id_to_name(u) + ' ', end='')
