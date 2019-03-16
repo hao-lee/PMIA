@@ -128,15 +128,22 @@ class Pgraph:
 		# 算法核心
 		prev = dict()
 		while self.__unvisited_count != 0:
-			min_distance_vertex = self.find_min_distance_vertex()
 			'''
 			如果 min_distance_vertex 是 None，则结束路径探测
 			1. 对于无向图来讲，剩下的节点都是孤立节点
 			2. 对于有向图来讲，剩下的节点可能是孤立节点或者是由于方向原因无法从 from_vertex 访问到
 			'''
-			p = min_distance_vertex.get_listpointer()
-			if p is None:
+			min_distance_vertex = self.find_min_distance_vertex()
+			if min_distance_vertex is None:
 				break
+
+			p = min_distance_vertex.get_listpointer()
+			# 如果 min_distance_vertex 的邻接表为空，说明它向后不连接任何点，我们跳过这个点继续找下一个 min_distance_vertex
+			if p is None:
+				min_distance_vertex.set_visited(True)
+				self.__unvisited_count -= 1
+				continue
+
 			while p:
 				p_distance = self.__adjlist[p.get_dst_id()].get_distance()
 				sum_distance = min_distance_vertex.get_distance() + p.get_edge_weight()
@@ -146,7 +153,12 @@ class Pgraph:
 				p = p.get_next()
 			min_distance_vertex.set_visited(True)
 			self.__unvisited_count -= 1
+
 		path = [to_vertex]
+		# 若 prev 字典里没记录从哪能到 to_vertex，说明到 to_vertex 不可达
+		if to_vertex not in prev:
+			print("%d->%d no path" %(from_vertex, to_vertex))
+			return None
 		prev_v = prev[to_vertex]
 		while prev_v != from_vertex:
 			path.insert(0, prev_v)
@@ -161,15 +173,43 @@ class Pgraph:
 				return p.get_edge_weight()
 			p = p.get_next()
 		return -1
-'''
+
+# 判断两点之间是否连通
+	def is_connected(self, start, end):
+		if start == end: # 起止点相同，没有物理意义，返回 False
+			#print("is_connected: start and end is the same vertex %d" %start)
+			return False
+		stack = []
+		current_id = start
+		for each in self.__adjlist:
+			each.set_visited(False)
+		p = self.__adjlist[start].get_listpointer()
+		while p:
+			stack.append(p.get_dst_id())
+			p = p.get_next()
+		while len(stack) != 0:
+			current_id = stack.pop()
+			if current_id == end:
+				break
+			current_vertex = self.__adjlist[current_id]
+			if current_vertex.get_visited():
+				continue
+			current_vertex.set_visited(True)
+			p = self.__adjlist[current_id].get_listpointer()
+			while p:
+				stack.append(p.get_dst_id())
+				p = p.get_next()
+		if current_id == end:
+			return True
+		else:
+			return False
+
 	def get_input_vertex(self, v):
-		# 首先获取能到v的直接前驱
-		input_set = set(self.__adjlist[v].get_incoming_vertex())
-		# 对每一个能到v的(直接/间接)前驱点获取前驱点
-		for inp_v in input_set:
-			self.__adjlist[inp_v].get_incoming_vertex()
-			input_set.add(inc_v)
-'''
+		in_vlist = []
+		for each in self.__adjlist:
+			if self.is_connected(each.get_id(), v):
+				in_vlist.append(each.get_id())
+		return in_vlist
 
 	def mip(self, u, v):
 		pai = 1 # 求积运算
@@ -180,9 +220,8 @@ class Pgraph:
 
 	def miia(self, v, theta):
 		union = set()
-		for in_v in self.__adjlist[v].get_incoming_vertex(): # 获取能到达 v 的直接前驱点，TODO，考虑间接点
+		for in_v in self.get_input_vertex(v):
 			tmp_mip, tmp_path = self.mip(in_v, v)
-			print(in_v, tmp_mip, tmp_path)
 			if tmp_mip < theta:
 				continue
 			# 将 tmp_path 中的点都加入并集
@@ -212,10 +251,12 @@ if __name__ == '__main__':
 	pgraph.dump()
 
 	# 测试最短路径
-	#print(pgraph.shortest_path(0, 3))
+	#print(pgraph.shortest_path(0, 4))
+	# 测试连通性
+	#print(pgraph.is_connected(5, 4))
 
 	# 测试 MIIA 运算
-	miia_union = pgraph.miia(4, 0.07)
+	miia_union = pgraph.miia(3, 0.07)
 	print("MIIA set: ", end='')
 	for v_id in miia_union:
 		print(pgraph.vertex_id_to_name(v_id) + ' ', end='')
