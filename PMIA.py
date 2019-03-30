@@ -252,6 +252,7 @@ if __name__ == '__main__':
 	# 添加通信节点
 	vertex_name = ['L', 'A', 'B', 'C', 'D', 'E']
 	vertex_count = 6
+	theta = 0.07
 	for i in range(vertex_count):
 		pgraph.add_vertex(vertex_name[i])
 	# 添加边和权重
@@ -270,13 +271,25 @@ if __name__ == '__main__':
 	#print(pgraph.is_connected(5, 4))
 
 	# 测试 MIIA 运算
-	miia_union = pgraph.miia(3, 0.07)
-	print("MIIA set: ", end='')
-	for u in miia_union:
-		print(pgraph.vertex_id_to_name(u) + ' ', end='')
+	for vid in range(vertex_count):
+		miia_union = pgraph.miia(vid, theta)
+		print("MIIA(%s) = " %pgraph.vertex_id_to_name(vid), end='')
+		if len(miia_union) == 0:
+			print(" Ø".encode('utf-8').decode("gbk"))
+			continue
+		print("{ ", end='')
+		for u in miia_union:
+			print(pgraph.vertex_id_to_name(u) + ' ', end='')
+		print('}')
 	print()
 	# 测试 MIOA 运算
-	mioa_union = pgraph.mioa(1, 0.07)
-	print("MIOA set: ", end='')
-	for u in mioa_union:
-		print(pgraph.vertex_id_to_name(u) + ' ', end='')
+	for vid in range(vertex_count):
+		mioa_union = pgraph.mioa(vid, theta)
+		print("MIOA(%s) = " %pgraph.vertex_id_to_name(vid), end='')
+		if len(mioa_union) == 0:
+			print(" Ø".encode('utf-8').decode("gbk"))
+			continue
+		print("{ ", end='')
+		for u in mioa_union:
+			print(pgraph.vertex_id_to_name(u) + ' ', end='')
+		print('}')
