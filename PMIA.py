@@ -69,12 +69,28 @@ class Padjlist_node:
 class Pgraph:
 	def __init__(self):
 		self.__adjlist = [] # array of pvertex
+		self.__count = 0
 		# 以下变量用于 Dijkstra 算法，外部不可访问，仅用于算法计算
 		self.__unvisited_count = None
+
+	def get_vcount(self):
+		return self.__count
+
+	def get_vidlist(self):
+		return [vid for vid in range(self.__count)]
+
+	def pp(self, u, v):
+		p = self.__adjlist[u].get_listpointer()
+		while p:
+			if p.get_dst_id() == v:
+				return p.get_edge_weight()
+			p = p.get_next()
+		raise Exception("pp(u,v) doesn't exist")
 
 	def add_vertex(self, vertex_name):
 		v = Pvertex(len(self.__adjlist), vertex_name)
 		self.__adjlist.append(v)
+		self.__count += 1
 
 	def add_edge(self, src_vertex_id, dst_vertex_id, edge_weight):
 		# 检测节点合法性
@@ -218,6 +234,17 @@ class Pgraph:
 				out_vlist.append(each.get_id())
 		return out_vlist
 
+	def get_inneighbor_vertex(self, v):
+		inneighbor = []
+		for vobj in self.__adjlist:
+			p = vobj.get_listpointer()
+			while p:
+				if p.get_dst_id() == v:
+					inneighbor.append(vobj.get_id())
+					break
+				p = p.get_next()
+		return inneighbor
+
 	def mip(self, u, v):
 		pai = 1 # 求积运算
 		path = self.shortest_path(u, v) # 计算 u, v 之间的最短路径
@@ -246,6 +273,18 @@ class Pgraph:
 	def vertex_id_to_name(self, id):
 		return self.__adjlist[id].get_name()
 
+	def ap(self, u, S, miia_union):
+		if u not in miia_union:
+			raise Exception("u is not a element from miia_union")
+		if u in S:
+			return 1
+		inneighbor = self.get_inneighbor_vertex(u)
+		if len(inneighbor) == 0:
+			return 0
+		product = 1
+		for w in inneighbor:
+			product *= 1 - self.ap(w, S, miia_union) * self.pp(w, u)
+		return 1 - product
 
 def test(pgraph, vertex_count, theta):
 	# 打印出数据结构看看对不对
@@ -289,6 +328,10 @@ def test(pgraph, vertex_count, theta):
 			print(pgraph.vertex_id_to_name(u) + ' ', end='')
 		print('}')
 
+	# 测试 ap 计算函数
+	print("Test ap algorithm:")
+	print(pgraph.ap(0, set(), pgraph.miia(3, theta)))
+
 
 if __name__ == '__main__':
 	# 创建通信图
@@ -307,3 +350,15 @@ if __name__ == '__main__':
 	pgraph.add_edge(3, 5, 0.08)
 
 	test(pgraph, vertex_count, theta)
+
+	# Initialization
+	S = set()
+	IncInf = dict()
+	V = pgraph.get_vidlist()
+	for vid in V:
+		IncInf[vid] = 0
+	MIIA = dict() # vid <---> set()
+	MIOA = dict()
+	for vid in V:
+		MIIA[vid] = pgraph.miia(vid, theta)
+		MIOA[vid] = pgraph.mioa(vid, theta)
