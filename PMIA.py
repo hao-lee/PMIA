@@ -246,6 +246,50 @@ class Pgraph:
 	def vertex_id_to_name(self, id):
 		return self.__adjlist[id].get_name()
 
+
+def test(pgraph, vertex_count, theta):
+	# 打印出数据结构看看对不对
+	print("Graph adjacent list:")
+	pgraph.dump()
+	print()
+
+	# 测试最短路径
+	print("Test shortest path algorithm:")
+	print(pgraph.shortest_path(0, 4))
+	print()
+	# 测试连通性
+	print("Test connectivity algorithm:")
+	print(pgraph.is_connected(5, 4))
+	print()
+
+	# 测试 MIIA 运算
+	print("Test MIIA algorithm:")
+	for vid in range(vertex_count):
+		miia_union = pgraph.miia(vid, theta)
+		print("MIIA(%s) = " %pgraph.vertex_id_to_name(vid), end='')
+		if len(miia_union) == 0:
+			print(" Ø".encode('utf-8').decode("gbk"))
+			continue
+		print("{ ", end='')
+		for u in miia_union:
+			print(pgraph.vertex_id_to_name(u) + ' ', end='')
+		print('}')
+	print()
+
+	# 测试 MIOA 运算
+	print("Test MIOA algorithm:")
+	for vid in range(vertex_count):
+		mioa_union = pgraph.mioa(vid, theta)
+		print("MIOA(%s) = " %pgraph.vertex_id_to_name(vid), end='')
+		if len(mioa_union) == 0:
+			print(" Ø".encode('utf-8').decode("gbk"))
+			continue
+		print("{ ", end='')
+		for u in mioa_union:
+			print(pgraph.vertex_id_to_name(u) + ' ', end='')
+		print('}')
+
+
 if __name__ == '__main__':
 	# 创建通信图
 	pgraph = Pgraph()
@@ -261,35 +305,5 @@ if __name__ == '__main__':
 	pgraph.add_edge(1, 3, 0.8)
 	pgraph.add_edge(3, 4, 0.6)
 	pgraph.add_edge(3, 5, 0.08)
-	# 打印出数据结构看看对不对
-	print("Graph adjacent list:")
-	pgraph.dump()
 
-	# 测试最短路径
-	#print(pgraph.shortest_path(0, 4))
-	# 测试连通性
-	#print(pgraph.is_connected(5, 4))
-
-	# 测试 MIIA 运算
-	for vid in range(vertex_count):
-		miia_union = pgraph.miia(vid, theta)
-		print("MIIA(%s) = " %pgraph.vertex_id_to_name(vid), end='')
-		if len(miia_union) == 0:
-			print(" Ø".encode('utf-8').decode("gbk"))
-			continue
-		print("{ ", end='')
-		for u in miia_union:
-			print(pgraph.vertex_id_to_name(u) + ' ', end='')
-		print('}')
-	print()
-	# 测试 MIOA 运算
-	for vid in range(vertex_count):
-		mioa_union = pgraph.mioa(vid, theta)
-		print("MIOA(%s) = " %pgraph.vertex_id_to_name(vid), end='')
-		if len(mioa_union) == 0:
-			print(" Ø".encode('utf-8').decode("gbk"))
-			continue
-		print("{ ", end='')
-		for u in mioa_union:
-			print(pgraph.vertex_id_to_name(u) + ' ', end='')
-		print('}')
+	test(pgraph, vertex_count, theta)
