@@ -220,6 +220,7 @@ class Pgraph:
 		else:
 			return False
 
+	# 入节点，未必直接相接
 	def get_input_vertex(self, v):
 		in_vlist = []
 		for each in self.__adjlist:
@@ -227,6 +228,7 @@ class Pgraph:
 				in_vlist.append(each.get_id())
 		return in_vlist
 
+	# 出节点，未必直接相接
 	def get_output_vertex(self, v):
 		out_vlist = []
 		for each in self.__adjlist:
@@ -234,6 +236,7 @@ class Pgraph:
 				out_vlist.append(each.get_id())
 		return out_vlist
 
+	# 入邻居
 	def get_inneighbor_vertex(self, v):
 		inneighbor = []
 		for vobj in self.__adjlist:
@@ -244,6 +247,15 @@ class Pgraph:
 					break
 				p = p.get_next()
 		return inneighbor
+
+	# 出邻居
+	def get_outneighbor_vertex(self, v):
+		outneighbor = []
+		p = self.__adjlist[v].get_listpointer()
+		while p:
+			outneighbor.append(p.get_id())
+			p = p.get_next()
+		return outneighbor
 
 	def mip(self, u, v):
 		pai = 1 # 求积运算
@@ -285,6 +297,21 @@ class Pgraph:
 		for w in inneighbor:
 			product *= 1 - self.ap(w, S, miia_union) * self.pp(w, u)
 		return 1 - product
+
+	# TODO
+	def alpha(self, v, u, S, miia_union):
+		if v == u:
+			return 1
+		w =
+		if w in S:
+			return 0
+		pai = 1
+		for u_x in self.get_input_vertex(w):
+			if u_x == u:
+				continue
+			pai *= (1 - self.ap(u_x, S, miia_union) * self.pp(u_x, w))
+		return self.alpha(v, w) * self.pp(u, w) * pai
+
 
 def test(pgraph, vertex_count, theta):
 	# 打印出数据结构看看对不对
@@ -355,10 +382,16 @@ if __name__ == '__main__':
 	S = set()
 	IncInf = dict()
 	V = pgraph.get_vidlist()
+	for v in V:
+		IncInf[v] = 0
 	for vid in V:
 		IncInf[vid] = 0
 	MIIA = dict() # vid <---> set()
 	MIOA = dict()
-	for vid in V:
-		MIIA[vid] = pgraph.miia(vid, theta)
-		MIOA[vid] = pgraph.mioa(vid, theta)
+	for v in V:
+		MIIA[v] = pgraph.miia(v, theta)
+		MIOA[v] = pgraph.mioa(v, theta)
+		for u in MIIA[vid]:
+			IncInf[u] += pgraph.alpha(v, u, S, MIIA[v]) * (1 - pgraph.ap(u, S, MIIA[v]))
+
+	# Main Loop
