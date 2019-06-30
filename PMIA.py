@@ -8,6 +8,7 @@ class Pvertex:
 		self.__vertex_name = vertex_name
 		self.__listpointer = None # 出边节点
 		self.__incoming_vertex = [] # 入边节点
+		self.__visit_in_algo3 = False
 		# 以下变量用于 Dijkstra 算法
 		self.__visited = None
 		self.__distance = None
@@ -41,6 +42,12 @@ class Pvertex:
 
 	def get_incoming_vertex(self):
 		return self.__incoming_vertex
+
+	def can_be_w_in_algo3(self):
+		return not self.__visit_in_algo3
+
+	def exclude_for_algo3(self):
+		self.__visit_in_algo3 = True
 
 # 邻接表节点类
 class Padjlist_node:
@@ -85,7 +92,8 @@ class Pgraph:
 			if p.get_dst_id() == v:
 				return p.get_edge_weight()
 			p = p.get_next()
-		raise Exception("pp(u,v) doesn't exist")
+		return 0 # u-v 没有连接
+		#raise Exception("pp(u,v) doesn't exist")
 
 	def add_vertex(self, vertex_name):
 		v = Pvertex(len(self.__adjlist), vertex_name)
@@ -253,7 +261,7 @@ class Pgraph:
 		outneighbor = []
 		p = self.__adjlist[v].get_listpointer()
 		while p:
-			outneighbor.append(p.get_id())
+			outneighbor.append(p.get_dst_id())
 			p = p.get_next()
 		return outneighbor
 
@@ -265,29 +273,29 @@ class Pgraph:
 		return pai
 
 	def miia(self, v, theta):
-		union = set()
+		union = []
 		for u in self.get_input_vertex(v):
 			tmp_mip = self.mip(u, v)
 			if tmp_mip < theta:
 				continue
-			union.add(u)
+			union.append(u)
 		return union
 
 	def mioa(self, v, theta):
-		union = set()
+		union = []
 		for u in self.get_output_vertex(v):
 			tmp_mip = self.mip(v, u)
 			if tmp_mip < theta:
 				continue
-			union.add(u)
+			union.append(u)
 		return union
 
 	def vertex_id_to_name(self, id):
 		return self.__adjlist[id].get_name()
 
 	def ap(self, u, S, miia_union):
-		if u not in miia_union:
-			raise Exception("u is not a element from miia_union")
+		if u in miia_union: # 根据初始化的代码推知
+			return 0
 		if u in S:
 			return 1
 		inneighbor = self.get_inneighbor_vertex(u)
@@ -302,15 +310,25 @@ class Pgraph:
 	def alpha(self, v, u, S, miia_union):
 		if v == u:
 			return 1
-		w =
+		'''
+		w = None
+		for pickup_v in self.get_outneighbor_vertex(u):
+			if self.__adjlist[pickup_v].can_be_w_in_algo3():
+				w = pickup_v
+				self.__adjlist[pickup_v].exclude_for_algo3()
+				break
+		if w is None:
+			raise Exception("Cannot find a usable w in alog3")
+		'''
+		w = self.get_outneighbor_vertex(u)[0]
 		if w in S:
 			return 0
 		pai = 1
-		for u_x in self.get_input_vertex(w):
-			if u_x == u:
+		for u_quote in self.get_input_vertex(w):
+			if u_quote == u:
 				continue
-			pai *= (1 - self.ap(u_x, S, miia_union) * self.pp(u_x, w))
-		return self.alpha(v, w) * self.pp(u, w) * pai
+			pai *= (1 - self.ap(u_quote, S, miia_union) * self.pp(u_quote, w))
+		return self.alpha(v, w, S, miia_union) * self.pp(u, w) * pai
 
 
 def test(pgraph, vertex_count, theta):
@@ -356,8 +374,8 @@ def test(pgraph, vertex_count, theta):
 		print('}')
 
 	# 测试 ap 计算函数
-	print("Test ap algorithm:")
-	print(pgraph.ap(0, set(), pgraph.miia(3, theta)))
+	#print("Test ap algorithm:")
+	#print(pgraph.ap(3, pgraph.miia(3, theta)[0], set(), pgraph.miia(3, theta)))
 
 
 if __name__ == '__main__':
@@ -391,7 +409,7 @@ if __name__ == '__main__':
 	for v in V:
 		MIIA[v] = pgraph.miia(v, theta)
 		MIOA[v] = pgraph.mioa(v, theta)
-		for u in MIIA[vid]:
+		for u in MIIA[v]:
 			IncInf[u] += pgraph.alpha(v, u, S, MIIA[v]) * (1 - pgraph.ap(u, S, MIIA[v]))
 
 	# Main Loop
