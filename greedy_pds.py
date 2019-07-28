@@ -26,11 +26,13 @@ class Vertex:
 		v.set_next(self.__listpointer)
 		self.__listpointer = v
 
-	def acc_duration(self, duration):
+	def acc_dominance(self, duration):
 		self.__dominance += duration
 
-	def dec_duration(self, duration):
+	def dec_dominance(self, duration):
 		self.__dominance -= duration
+		if self.__dominance < 0:
+			self.__dominance = 0
 
 	def get_dominance(self):
 		return self.__dominance
@@ -88,6 +90,13 @@ class Graph:
 		self.__lifetime = 0
 		self.__white_count = 0
 		self.__dominance_set = set()
+		self.__debug = False
+
+	def enable_debug(self):
+		self.__debug = True
+
+	def disable_debug(self):
+		self.__debug = False
 
 	def get_vidlist(self):
 		return [vid for vid in range(self.__count)]
@@ -144,26 +153,87 @@ class Graph:
 			p = vobj.get_listpointer()
 			while p:
 				duration = p.get_edge_weight()[1]
-				vobj.acc_duration(duration)
+				vobj.acc_dominance(duration)
 				p = p.get_next()
 		self.__white_count = len(self.__adjlist)
 
-	def update_dominance(self):
+	def update_dominances(self):
 		for vobj in self.__adjlist:
-			vobj.reset_dominance()
-			p = vobj.get_listpointer()
-			while p:
-				if self.__adjlist[p.get_dst_id()].get_color() == COLOR_BLACK:
-					p = p.get_next()
-					continue
-				duration = p.get_edge_weight()[1]
-				vobj.acc_duration(duration)
+			if vobj.get_color() == COLOR_BLACK:
+				continue
+			self.update_dominance(vobj)
+
+	def update_dominance(self, vobj):
+		p = vobj.get_listpointer()
+		while p:
+			# vobj 邻接了 p 这个黑节点，此边的支配作用消失
+			if self.__adjlist[p.get_dst_id()].get_color() == COLOR_BLACK:
+				vobj.dec_dominance(p.get_edge_weight()[1])
 				p = p.get_next()
+				continue
+			# 判断 p 这个邻接点是否与黑节点相邻，如果相邻则返回被黑掉的区间
+			(vobj_adj_adjoin_black, blacked_weight) = self.is_adj_with_black(p.get_dst_id())
+			# p 与黑节点不相邻，vobj <-> p 的边不受影响，继续遍历下一个邻接点
+			if not vobj_adj_adjoin_black:
+				p = p.get_next()
+				continue
+			# vobj 不能完全支配其邻接点 p，减去被黑掉的区间长度
+			delta = self.intersect(blacked_weight, p.get_edge_weight())
+			# 如果交集为空，则 vobj 的支配值不受影响；若非空，则 vobj 的支配值要减掉被黑的部分
+			if delta is not None:
+				vobj.dec_dominance(delta[1])
+			p = p.get_next()
+
+		if self.__debug:
+			print("========= Dump dominance for debugging =========")
+			self.dump_dominance()
+
+	# 如果 vid 不邻接黑节点，则返回 False，否则算出邻接黑节点的边的并集
+	def is_adj_with_black(self, vid):
+		p = self.__adjlist[vid].get_listpointer()
+		ret = False
+		union_weight = None
+		while p:
+			if self.__adjlist[p.get_dst_id()].get_color() == COLOR_BLACK:
+				ret = True
+				union_weight = self.union(union_weight, p.get_edge_weight())
+			p = p.get_next()
+		return (ret, union_weight)
+
+	def union(self, weight1, weight2):
+		if weight1 is None:
+			return weight2
+		if weight2 is None:
+			return weight1
+		s1 = weight1[0]
+		d1 = weight1[1]
+		s2 = weight2[0]
+		d2 = weight2[1]
+		s = s1 if s1 < s2 else s2
+		e1 = s1+d1
+		e2 = s2+d2
+		e = e1 if e1 > e2 else e2
+		return (s, e - s)
+
+	def intersect(self, weight1, weight2):
+		if weight1 is None or weight2 is None:
+			return None
+		s1 = weight1[0]
+		d1 = weight1[1]
+		s2 = weight2[0]
+		d2 = weight2[1]
+		s = s1 if s1 > s2 else s2
+		e1 = s1+d1
+		e2 = s2+d2
+		e = e1 if e1 < e2 else e2
+		if s == e:
+			return None
+		return (s, e - s)
 
 	def set_lifetime(self, lifetime):
 		self.__lifetime = lifetime
 		for vobj in self.__adjlist:
-			vobj.acc_duration(lifetime)
+			vobj.acc_dominance(lifetime)
 			vobj.init_timeline(lifetime)
 
 	def greedy_pds(self):
@@ -199,7 +269,7 @@ class Graph:
 
 			if self.__white_count == 0:
 				break
-			self.update_dominance()
+			self.update_dominances()
 
 	def get_dominance_set(self):
 		names = []
@@ -228,6 +298,8 @@ if __name__ == '__main__':
 	graph.init_dominance()
 	graph.set_lifetime(5)
 	graph.dump_dominance()
+	# 如果需要打印每一次 dominance 更新的过程，可以用下面的语句开启调试
+	#graph.enable_debug()
 	graph.greedy_pds()
 	print("Dominance set:")
 	print(graph.get_dominance_set())
