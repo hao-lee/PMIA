@@ -21,12 +21,12 @@ for source_file in glob.glob("*.txt"):
 
 white_nr = 0
 for g in gs:
-	bc=nx.betweenness_centrality(g)
+	dc=nx.degree_centrality(g)
 	for node in g.nodes():
 		if G.has_node(node):
-			G.nodes[node]["bc"] += bc[node]
+			G.nodes[node]["dc"] += dc[node]
 		else:
-			G.add_node(node, bc=bc[node], color=COLOR_WHITE)
+			G.add_node(node, dc=dc[node], color=COLOR_WHITE)
 			white_nr += 1
 	for edge in g.edges():
 		if G.has_edge(edge[0], edge[1]):
@@ -42,7 +42,7 @@ def get_max_node(G):
 			continue
 		if max_node == -1:
 			max_node = node
-		elif G.nodes[node]["bc"] > G.nodes[max_node]["bc"]:
+		elif G.nodes[node]["dc"] > G.nodes[max_node]["dc"]:
 			max_node = node
 	return max_node
 

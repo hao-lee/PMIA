@@ -1,3 +1,5 @@
+import glob
+
 COLOR_WHITE = 0
 COLOR_GREY = 1
 COLOR_BLACK = 2
@@ -285,24 +287,48 @@ class Graph:
 
 if __name__ == '__main__':
 	graph = Graph()
-	vertex_names = ['a', 'b', 'c', 'd', 'e', 'f']
-
+	vertex_names = set()
+	for source_file in glob.glob("*.txt"):
+		with open(source_file, "r") as f:
+			next(f)
+			for line in f:
+				vertex_names.add(line.split()[0])
+				vertex_names.add(line.split()[1])
+	# 需要转为list，程序要用到list的特性，使用节点名称反查节点下标，参见add_edge函数
+	vertex_names = list(vertex_names)
+	# 排个序，当两个节点的支配值相等时，节点在__adjlist中的顺序直接影响谁会被选中，所以如果不排序
+	# 则每次运行程序的结果都不一样
+	vertex_names = sorted(list(vertex_names))
 	graph.add_vertices(vertex_names)
+
+	preprocess = dict()
+	time_point = 0
+	for source_file in glob.glob("*.txt"):
+		with open(source_file, "r") as f:
+			next(f)
+			for line in f:
+				e = (line.split()[0], line.split()[1])
+				# 无向图，("a", "b") 和 ("b", "a") 是一个边
+				e = tuple(sorted(e)) # 排个序，这样就不受边端点顺序的影响了
+				if e not in preprocess:
+					preprocess[e] = (time_point, 1)
+				else:
+					preprocess[e] = (preprocess[e][0], preprocess[e][1]+1)
+		time_point += 1
+	print(preprocess)
 	# 添加边和权重
-	graph.add_edge('a', 'b', (1, 2))
-	graph.add_edge('a', 'f', (3, 2))
-	graph.add_edge('a', 'e', (0, 5))
-	graph.add_edge('e', 'd', (2, 3))
-	graph.add_edge('d', 'f', (1, 4))
-	graph.add_edge('d', 'c', (0, 3))
-	graph.add_edge('c', 'f', (4, 1))
-	graph.add_edge('c', 'b', (3, 2))
-	graph.add_edge('f', 'b', (0, 5))
+	for e, w in preprocess.items():
+		if int(w[0]) + int(w[1]) > time_point:
+			raise Exception("%s is invalid, weight=%s. Maybe this is because\
+							there are some duplicate edges in the same file"
+							%(str(e), str(w)))
+		print(e[0], e[1], w)
+		graph.add_edge(e[0], e[1], w)
 
 	graph.dump_graph()
 
 	graph.init_dominance()
-	graph.set_lifetime(5)
+	graph.set_lifetime(time_point)
 	graph.dump_dominance()
 	# 如果需要打印每一次 dominance 更新的过程，可以用下面的语句开启调试
 	#graph.enable_debug()
