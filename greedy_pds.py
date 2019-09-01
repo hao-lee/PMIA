@@ -130,7 +130,13 @@ class Graph:
 	def dump_dominance(self):
 		print("Dominance of each vertex:")
 		for vobj in self.__adjlist:
-			print("D(%s)=%d" %(vobj.get_name(), vobj.get_dominance()))
+			print("D(%s)=%d\t" %(vobj.get_name(), vobj.get_dominance()), end="")
+			if vobj.get_color() == COLOR_WHITE:
+				print("white")
+			elif vobj.get_color() == COLOR_BLACK:
+				print("black")
+			else:
+				print("grey")
 		print()
 
 	def __valid_vertex(self, vid):
