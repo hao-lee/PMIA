@@ -1,5 +1,9 @@
 import networkx as nx
 import glob
+import matplotlib
+matplotlib.use('WXAgg')
+import matplotlib.pyplot as plt
+import argparse, sys
 
 COLOR_GREY = 0
 COLOR_BLACK = 1
@@ -46,8 +50,12 @@ def get_max_node(G):
 			max_node = node
 	return max_node
 
+# 从参数获取阈值
+parser = argparse.ArgumentParser()
+parser.add_argument("-th", help="Threshold", default=3, type=int)
+args = parser.parse_args()
+threshold = args.th # 边的存在时间小于阈值，不予考虑，值越大，说明对边的要求越高，选择的点越多
 D = []
-threshold = 3 # 边的存在时间小于3，不予考虑
 while white_nr:
 	max_node = get_max_node(G)
 	D.append(max_node)
@@ -64,3 +72,18 @@ while white_nr:
 		white_nr -= 1
 
 print(D)
+sys.stdout.flush()
+
+# 画图
+color_vals = []
+for node in G.nodes():
+	if G.nodes[node]["color"] == COLOR_BLACK:
+		color_vals.append("#000000")
+	elif G.nodes[node]["color"] == COLOR_GREY:
+		color_vals.append("#7b7b7b")
+	else:
+		raise Exception("Encounter white node")
+plt.title("threshold=%d" %threshold, loc="left")
+nx.draw(G, cmap=plt.get_cmap('viridis'), node_color=color_vals, edge_color="#bebebe",
+		with_labels=True, font_color='white')
+plt.show()
