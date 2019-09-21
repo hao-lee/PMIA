@@ -288,7 +288,7 @@ class Graph:
 if __name__ == '__main__':
 	graph = Graph()
 	vertex_names = set()
-	for source_file in glob.glob("*.txt"):
+	for source_file in glob.glob("[0-9]*.txt"):
 		with open(source_file, "r") as f:
 			next(f)
 			for line in f:
@@ -303,7 +303,7 @@ if __name__ == '__main__':
 
 	preprocess = dict()
 	time_point = 0
-	for source_file in glob.glob("*.txt"):
+	for source_file in glob.glob("[0-9]*.txt"):
 		with open(source_file, "r") as f:
 			next(f)
 			for line in f:
@@ -313,25 +313,28 @@ if __name__ == '__main__':
 				if e not in preprocess:
 					preprocess[e] = (time_point, 1)
 				else:
+					if time_point - preprocess[e][0] != preprocess[e][1]:
+						raise Exception("%s is not contiguous in timeline" %str(e))
 					preprocess[e] = (preprocess[e][0], preprocess[e][1]+1)
 		time_point += 1
-	print(preprocess)
+	#print(preprocess)
 	# 添加边和权重
 	for e, w in preprocess.items():
 		if int(w[0]) + int(w[1]) > time_point:
-			raise Exception("%s is invalid, weight=%s. Maybe this is because\
-							there are some duplicate edges in the same file"
+			raise Exception("%s is invalid, weight=%s. Maybe this is because "
+							"there are some duplicate edges in the same file"
 							%(str(e), str(w)))
-		print(e[0], e[1], w)
+		#print(e[0], e[1], w)
 		graph.add_edge(e[0], e[1], w)
 
-	graph.dump_graph()
+	#graph.dump_graph()
 
 	graph.init_dominance()
 	graph.set_lifetime(time_point)
-	graph.dump_dominance()
+	#graph.dump_dominance()
 	# 如果需要打印每一次 dominance 更新的过程，可以用下面的语句开启调试
 	#graph.enable_debug()
 	graph.greedy_pds()
-	print("Dominance set:")
-	print(graph.get_dominance_set())
+	d = graph.get_dominance_set()
+	print("Dominance set: (%d)" %len(d))
+	print(d)
