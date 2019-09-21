@@ -1,0 +1,21 @@
+function greedy_pds()
+	while white_exist(g):
+		max_v = find_max_dominance_node()
+		add max_v to D
+		set max_v to black
+		for each white node p in neighbor(max_v):
+			if p is dominated:
+				set p to grey
+		update_dominances()
+
+function update_dominances()
+	for each node v:
+		for each node p in neighbor(v):
+			if p is black:
+				v.dominance -= edge(p, n)
+				continue
+			if p is neighbor of a black node b:
+				black_edge = (p, b)
+				edge = (p, v)
+				delta = intersect(black_edge, edge)
+				v.dominance -= delta
