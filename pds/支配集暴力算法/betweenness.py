@@ -50,11 +50,27 @@ def get_max_node(G):
 			max_node = node
 	return max_node
 
+def color_grey(node, threshold, depth):
+	if depth == 0:
+		return
+	global white_nr
+	for adj_node in G.adj[node]:
+		if G.edges[node, adj_node]["ref"] < threshold:
+			continue
+		if G.nodes[adj_node]["color"] != COLOR_WHITE:
+			continue
+		G.nodes[adj_node]["color"] = COLOR_GREY
+		white_nr -= 1
+		# recursion
+		color_grey(adj_node, threshold, depth-1)
+
 # 从参数获取阈值
 parser = argparse.ArgumentParser()
 parser.add_argument("-th", help="Threshold", default=3, type=int)
+parser.add_argument("-d", help="Recursion Depth", default=1, type=int)
 args = parser.parse_args()
 threshold = args.th # 边的存在时间小于阈值，不予考虑，值越大，说明对边的要求越高，选择的点越多
+depth = args.d
 D = []
 while white_nr:
 	max_node = get_max_node(G)
@@ -62,14 +78,7 @@ while white_nr:
 	if G.nodes[max_node]["color"] == COLOR_WHITE:
 		white_nr -= 1 # 白色计数，只有白色减少才减一，灰黑的涂色对白色技术无影响
 	G.nodes[max_node]["color"] = COLOR_BLACK
-
-	for adj_node in G.adj[max_node]:
-		if G.edges[max_node, adj_node]["ref"] < threshold:
-			continue
-		if G.nodes[adj_node]["color"] != COLOR_WHITE:
-			continue
-		G.nodes[adj_node]["color"] = COLOR_GREY
-		white_nr -= 1
+	color_grey(max_node, threshold, depth)
 
 print(D)
 sys.stdout.flush()
@@ -83,7 +92,7 @@ for node in G.nodes():
 		color_vals.append("#7b7b7b")
 	else:
 		raise Exception("Encounter white node")
-plt.title("threshold=%d" %threshold, loc="left")
+plt.title("threshold=%d depth=%d" %(threshold, depth), loc="left")
 nx.draw(G, cmap=plt.get_cmap('viridis'), node_color=color_vals, edge_color="#bebebe",
 		with_labels=True, font_color='white')
 plt.show()
