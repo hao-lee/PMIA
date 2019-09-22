@@ -313,6 +313,7 @@ if __name__ == '__main__':
 				if e not in preprocess:
 					preprocess[e] = (time_point, 1)
 				else:
+					# 如果时间段不连续，注释掉317 318两行
 					if time_point - preprocess[e][0] != preprocess[e][1]:
 						raise Exception("%s is not contiguous in timeline" %str(e))
 					preprocess[e] = (preprocess[e][0], preprocess[e][1]+1)
