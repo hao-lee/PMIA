@@ -14,6 +14,9 @@ def create_graph(source_file):
 	with open(source_file, "r") as f:
 		next(f)
 		for line in f:
+			line = line.strip()
+			if line == "":
+				continue
 			g.add_edge(line.split()[0], line.split()[1])
 	return g
 

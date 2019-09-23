@@ -292,6 +292,9 @@ if __name__ == '__main__':
 		with open(source_file, "r") as f:
 			next(f)
 			for line in f:
+				line = line.strip()
+				if line == "":
+					continue
 				vertex_names.add(line.split()[0])
 				vertex_names.add(line.split()[1])
 	# 需要转为list，程序要用到list的特性，使用节点名称反查节点下标，参见add_edge函数
@@ -307,6 +310,9 @@ if __name__ == '__main__':
 		with open(source_file, "r") as f:
 			next(f)
 			for line in f:
+				line = line.strip()
+				if line == "":
+					continue
 				e = (line.split()[0], line.split()[1])
 				# 无向图，("a", "b") 和 ("b", "a") 是一个边
 				e = tuple(sorted(e)) # 排个序，这样就不受边端点顺序的影响了
