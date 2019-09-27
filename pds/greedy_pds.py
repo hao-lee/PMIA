@@ -1,4 +1,9 @@
 import glob
+import networkx as nx
+import matplotlib
+matplotlib.use('WXAgg')
+import matplotlib.pyplot as plt
+import sys
 
 COLOR_WHITE = 0
 COLOR_GREY = 1
@@ -285,6 +290,26 @@ class Graph:
 			names.append(self.get_name_by_id(vid))
 		return names
 
+	def draw(self):
+		g = nx.Graph()
+		for vobj in self.__adjlist:
+			p = vobj.get_listpointer()
+			while p:
+				g.add_edge(vobj.get_name(), self.get_name_by_id(p.get_dst_id()))
+				p = p.get_next()
+		color_vals = []
+		for node in g.nodes():
+			vid = self.__vertex_names.index(node)
+			if self.__adjlist[vid].get_color() == COLOR_BLACK:
+				color_vals.append("#000000")
+			elif self.__adjlist[vid].get_color() == COLOR_GREY:
+				color_vals.append("#7b7b7b")
+			else:
+				raise Exception("Encounter white node")
+		nx.draw(g, cmap=plt.get_cmap('viridis'), node_color=color_vals, edge_color="#bebebe",
+		with_labels=True, font_color='white')
+		plt.show()
+
 if __name__ == '__main__':
 	graph = Graph()
 	vertex_names = set()
@@ -345,3 +370,6 @@ if __name__ == '__main__':
 	d = graph.get_dominance_set()
 	print("Dominance set: (%d)" %len(d))
 	print(d)
+	sys.stdout.flush()
+	# 画图
+	graph.draw()
