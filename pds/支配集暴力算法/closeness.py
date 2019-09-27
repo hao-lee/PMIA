@@ -83,6 +83,7 @@ while white_nr:
 	G.nodes[max_node]["color"] = COLOR_BLACK
 	color_grey(max_node, threshold, depth)
 
+print("Dominance set: (%d)" %len(D))
 print(D)
 sys.stdout.flush()
 
