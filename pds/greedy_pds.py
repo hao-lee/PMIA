@@ -98,6 +98,7 @@ class Graph:
 		self.__white_count = 0
 		self.__dominance_set = set()
 		self.__debug = False
+		self.__color_process = []
 
 	def enable_debug(self):
 		self.__debug = True
@@ -261,6 +262,8 @@ class Graph:
 					max_dominance_vid = vobj.get_id()
 			# Add Dominance vertex
 			self.__dominance_set.add(max_dominance_vid)
+			# record process
+			self.__color_process.append("[%s]" %self.get_name_by_id(max_dominance_vid))
 			# Make sure: white -> black
 			if self.__adjlist[max_dominance_vid].get_color() == COLOR_WHITE:
 				self.__white_count -= 1
@@ -277,6 +280,7 @@ class Graph:
 				self.__adjlist[p.get_dst_id()].dominate_timeline(start, end)
 				if self.__adjlist[p.get_dst_id()].timeline_is_dominated():
 					self.__adjlist[p.get_dst_id()].set_color(COLOR_GREY)
+					self.__color_process.append(self.get_name_by_id(p.get_dst_id()))
 					self.__white_count -= 1
 				p = p.get_next()
 
@@ -289,6 +293,9 @@ class Graph:
 		for vid in self.__dominance_set:
 			names.append(self.get_name_by_id(vid))
 		return names
+
+	def get_color_process(self):
+		return self.__color_process
 
 	def draw(self):
 		g = nx.Graph()
@@ -370,6 +377,8 @@ if __name__ == '__main__':
 	d = graph.get_dominance_set()
 	print("Dominance set: (%d)" %len(d))
 	print(d)
+	print("Color process")
+	print("".join(graph.get_color_process()))
 	sys.stdout.flush()
 	# 画图
 	graph.draw()
